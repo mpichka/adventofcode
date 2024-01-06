@@ -1,16 +1,19 @@
 use std::{collections::HashMap, fs};
 
 fn main() {
-    let houses = solution("./input/data.txt");
-    println!("Houses: {}", houses);
+    let first_solution = first_solution("./input/data.txt");
+    println!("First solution: {}", first_solution);
+
+    let second_solution = second_solution("./input/data.txt");
+    println!("Second solution: {}", second_solution);
 }
 
-fn solution(file_path: &str) -> usize {
+fn first_solution(file_path: &str) -> usize {
     let file = fs::read_to_string(file_path).expect("Something went wrong reading the file");
 
     let mut position = Position::new();
 
-    let mut map = Map::new(&position);
+    let mut map = Map::new();
 
     for char in file.chars() {
         match char {
@@ -24,6 +27,45 @@ fn solution(file_path: &str) -> usize {
     }
 
     map.grid.len()
+}
+
+fn second_solution(file_path: &str) -> usize {
+    let file = fs::read_to_string(file_path).expect("Something went wrong reading the file");
+
+    let mut santa_position = Position::new();
+    let mut robo_santa_position = Position::new();
+
+    let mut map = Map::new();
+
+    let mut delivery_turn = DeliveryGuy::Santa;
+
+    for char in file.chars() {
+        let position = match delivery_turn {
+            DeliveryGuy::Santa => &mut santa_position,
+            DeliveryGuy::RoboSanta => &mut robo_santa_position,
+        };
+
+        match char {
+            'v' => position.move_down(),
+            '>' => position.move_right(),
+            '<' => position.move_left(),
+            '^' => position.move_up(),
+            _ => (),
+        };
+        map.deliver_present(&position);
+
+        delivery_turn = match delivery_turn {
+            DeliveryGuy::Santa => DeliveryGuy::RoboSanta,
+            DeliveryGuy::RoboSanta => DeliveryGuy::Santa,
+        };
+    }
+
+    map.grid.len()
+}
+
+enum DeliveryGuy {
+    Santa,
+    RoboSanta,
 }
 
 struct Position {
@@ -61,10 +103,10 @@ struct Map {
 }
 
 impl Map {
-    pub fn new(initial_position: &Position) -> Self {
+    pub fn new() -> Self {
         let mut grid = HashMap::new();
 
-        grid.insert(initial_position.get(), 1);
+        grid.insert((0, 0), 1);
 
         Self { grid }
     }
